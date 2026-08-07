@@ -228,7 +228,3 @@ dentist-api/
 │   └── api.php
 └── ...
 ```
-
-## 📄 Lisensi
-
-Silakan sesuaikan bagian ini dengan lisensi yang Anda pilih untuk project ini (misalnya MIT License).

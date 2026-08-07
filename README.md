@@ -95,7 +95,7 @@ Ikuti langkah-langkah di bawah ini untuk menjalankan aplikasi di komputer lokal 
 
 Pastikan sistem Anda sudah terinstal:
 
-- PHP >= 8.2
+- PHP >= 8.3
 - Composer
 - MySQL Server
 

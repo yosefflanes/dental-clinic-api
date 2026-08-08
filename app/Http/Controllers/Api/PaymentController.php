@@ -149,7 +149,7 @@ class PaymentController extends Controller
             $payment = Payment::where('appointment_id', $appointmentId)->first();
 
             if (!$payment) {
-                return response()->json(['status'   => 'error', 'message'   => 'Data pembayaran tidak ditemukann']);
+                return response()->json(['status'   => 'error', 'message'   => 'Data pembayaran tidak ditemukan.']);
             }
 
             // Logika perubahan status berdasarkan respons Midtrans
@@ -186,7 +186,7 @@ class PaymentController extends Controller
 
             return response()->json([
                 'status'    => 'success',
-                'message'   => 'Nofitikasi Midtrans berhasil diproses.'
+                'message'   => 'Notofikasi Midtrans berhasil diproses.'
             ]);
 
         } catch (\Exception $e) {

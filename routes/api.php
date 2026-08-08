@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorScheduleController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ServiceController;
 use Illuminate\Http\Request;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function (){
     Route::post('/appointments', [AppointmentController::class, 'store']);
     Route::get('/appointments/my', [AppointmentController::class, 'myAppointment']);
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
+    Route::post('/payments', [PaymentController::class, 'store']);
 
     /*
     |============================================================================

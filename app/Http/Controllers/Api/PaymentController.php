@@ -120,4 +120,81 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    public function notifications(Request $request): JsonResponse
+    {
+        try {
+            // Konfigurasi ulang kunci Midtrans
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = config('midtrans.is_production');
+
+            // Ambil data notifikasi resmi dari library Midtrans
+            $notif = new \Midtrans\Notification();
+
+            $transactionStatus  = $notif->transaction_status;
+            $payment_type       = $notif->payment_type;
+            $orderId            = $notif->order_id;
+            $fraudStatus        = $notif->fraud_status;
+
+            // Ekstraks kembali ID Appointment dari format order_id
+            // Format : DENTIST-{id_appointment}-{waktu_saat_ini}
+            $exploded = explode('-', $orderId);
+            $appointmentId = $exploded[1] ?? null;
+
+            if (!$appointmentId){
+                return response()->json(['status' => 'error', 'message' => 'Order ID tidak valid.'], 400);
+            }
+
+            // Cari data payment berdasarkan appointment_id
+            $payment = Payment::where('appointment_id', $appointmentId)->first();
+
+            if (!$payment) {
+                return response()->json(['status'   => 'error', 'message'   => 'Data pembayaran tidak ditemukann']);
+            }
+
+            // Logika perubahan status berdasarkan respons Midtrans
+            if ($transactionStatus == 'capture'){
+                if ($fraudStatus == 'challenge'){
+                    $payment->status = 'pending';
+                } else if ($fraudStatus == 'accept'){
+                    $payment->status = 'settlement';
+                }
+            } else if ($transactionStatus == 'settlement'){
+                $payment->status = 'settlement';
+            } else if ($transactionStatus == 'pending'){
+                $payment->status = 'pending';
+            } else if ($transactionStatus == 'deny' || $transactionStatus == 'expire' || $transactionStatus == 'cancel'){
+                $payment->status = 'cancel';
+
+                // Jika dibatalkan/expire, kita bisa update juga status appointment nya menjadi batal
+                $appointment = Appointment::find($appointmentId);
+                if ($appointment){
+                    $appointment->status = 'batal';
+                    $appointment->save();
+
+                    // Kembalikan ketersediaan jadwal dokter
+                    if ($appointment->doctorSchedule){
+                        $appointment->doctorSchedule->update(['is_available' => true]);
+                    }
+                }
+            }
+
+            // Simpan metode pembayaran yang dipilih dan transacction_id
+            $payment->method = $payment_type;
+            $payment->transaction_id = $notif->transaction_id;
+            $payment->save();
+
+            return response()->json([
+                'status'    => 'success',
+                'message'   => 'Nofitikasi Midtrans berhasil diproses.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Midtrans Notification Error: ' . $e->getMessage());
+            return response()->json([
+                'status'    => 'error',
+                'message'   => 'Terjadi kesalahan pada server webhook.'
+            ]);
+        }
+    }
 }

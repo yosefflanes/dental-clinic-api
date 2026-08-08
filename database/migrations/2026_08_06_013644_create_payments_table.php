@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('appointment_id')->unique()->constrained('appointments')->cascadeOnDelete();
+            $table->string('transaction_id')->nullable()->comment('ID Asli dari Midtrans');
+            $table->string('snap_token')->nullable()->comment('Token untuk pop-up Frontend');
             $table->string('method')->nullable();
             $table->decimal('amount', 12, 2);
-            $table->enum('status', ['unpaid', 'paid'])->default('unpaid');
+            $table->enum('status', ['pending', 'settlement', 'cance', 'expire'])->default('pending');
             $table->timestamps();
         });
     }

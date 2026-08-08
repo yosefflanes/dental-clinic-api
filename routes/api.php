@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorScheduleController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\ServiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -52,5 +53,6 @@ Route::middleware('auth:sanctum')->group(function (){
         Route::patch('/doctor-schedules/{id}/availability', [DoctorScheduleController::class, 'updateAvailability']);
         Route::get('/appointments', [AppointmentController::class, 'index']);
         Route::patch('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
+        Route::get('/reports', [ReportController::class, 'index']);
     });
 });

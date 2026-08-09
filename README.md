@@ -109,8 +109,8 @@ Pastikan sistem Anda sudah terinstal:
 1. **Clone repositori ini:**
 
    ```bash
-   git clone https://github.com/username-anda/nama-repo-anda.git
-   cd nama-repo-anda
+   git clone https://github.com/yosefflanes/dental-clinic-api
+   cd dental-clinic-api
    ```
 
 2. **Instal dependensi PHP:**

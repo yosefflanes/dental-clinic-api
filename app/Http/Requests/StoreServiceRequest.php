@@ -29,7 +29,7 @@ class StoreServiceRequest extends FormRequest
                 'name'          => ['sometimes', 'required', 'string', 'max:255'],
                 'description'   => ['nullable', 'string'],
                 'price'         => ['sometimes', 'required', 'numeric', 'min:0'],
-                'is_actibe'     => ['sometimes', 'required', 'boolean'],
+                'is_active'     => ['sometimes', 'required', 'boolean'],
             ];
         }
 

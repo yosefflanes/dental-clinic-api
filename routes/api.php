@@ -14,10 +14,9 @@ use Illuminate\Support\Facades\Route;
 | Public Routes
 |============================================================================
 */
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/services', [ServiceController::class, 'index']);
-Route::get('/services/{id}', [ServiceController::class, 'show']);
 Route::post('/payments/notification', [PaymentController::class, 'notification']);
 
 
@@ -26,16 +25,18 @@ Route::post('/payments/notification', [PaymentController::class, 'notification']
 | Protected Routes - Harus Login (Pasien)
 |============================================================================
 */
-Route::middleware('auth:sanctum')->group(function (){
+Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::get('/user', function(Request $request) {
+    Route::get('/user', function (Request $request) {
         return response()->json([
             'status'    => 'success',
             'data'      => $request->user()
         ]);
     });
 
+    Route::get('/services', [ServiceController::class, 'index']);
+    Route::get('/services/{id}', [ServiceController::class, 'show']);
     Route::get('/doctor-schedules', [DoctorScheduleController::class, 'index']);
 
     Route::post('/appointments', [AppointmentController::class, 'store']);

@@ -20,7 +20,7 @@ class PaymentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'appointment_id'    => ['required', 'exists:appointment,id'],
+            'appointment_id'    => ['required', 'exists:appointments,id'],
         ]);
 
         $appointment = Appointment::with(['service', 'payment'])->findOrFail($validated['appointment_id']);
@@ -41,7 +41,7 @@ class PaymentController extends Controller
             ], 422);
         }
 
-        // Cegah pembuatan token ganda
+        // Cegah pembuatan token ganda (Idempotency Logic)
         // Jika sudah ada payment dan tokennya masih ada, kembalikan token yang lama
         if ($appointment->payment && $appointment->payment->snap_token ){
             if ($appointment->payment->status === 'settlement') {
@@ -78,7 +78,7 @@ class PaymentController extends Controller
                     'order_id'      => $orderId,
                     'gross_amount'  => (int) $grossAmount,
                 ],
-                'costumer_details'      => [
+                'customer_details'      => [
                     'first_name'    => $request->user()->name,
                     'email'         => $request->user()->email,
                     'phone'         => $request->user()->phone,
@@ -121,7 +121,7 @@ class PaymentController extends Controller
         }
     }
 
-    public function notifications(Request $request): JsonResponse
+    public function notification(Request $request): JsonResponse
     {
         try {
             // Konfigurasi ulang kunci Midtrans
@@ -193,7 +193,8 @@ class PaymentController extends Controller
             Log::error('Midtrans Notification Error: ' . $e->getMessage());
             return response()->json([
                 'status'    => 'error',
-                'message'   => 'Terjadi kesalahan pada server webhook.'
+                'message'   => 'Terjadi kesalahan pada server webhook.',
+                'debug'     => $e->getMessage()
             ]);
         }
     }

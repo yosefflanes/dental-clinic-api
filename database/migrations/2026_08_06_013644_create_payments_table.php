@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('snap_token')->nullable()->comment('Token untuk pop-up Frontend');
             $table->string('method')->nullable();
             $table->decimal('amount', 12, 2);
-            $table->enum('status', ['pending', 'settlement', 'cance', 'expire'])->default('pending');
+            $table->enum('status', ['pending', 'settlement', 'cancel', 'expire'])->default('pending');
             $table->timestamps();
         });
     }

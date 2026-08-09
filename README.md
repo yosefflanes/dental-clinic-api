@@ -79,6 +79,8 @@ erDiagram
     PAYMENTS {
         bigint id PK
         bigint appointment_id FK
+        string transaction_id
+        string snap_token
         string method
         decimal amount
         enum status
@@ -172,8 +174,8 @@ Base URL: `/api`. Endpoint bertanda 🔒 butuh header `Authorization: Bearer <to
 
 | Method | Endpoint | Auth | Deskripsi |
 |---|---|---|---|
-| GET | `/services` | — | Melihat daftar layanan klinik (dengan pagination) |
-| GET | `/services/{id}` | — | Melihat detail spesifik suatu layanan |
+| GET | `/services` | 🔒 | Melihat daftar layanan klinik |
+| GET | `/services/{id}` | 🔒 | Melihat detail spesifik suatu layanan |
 | POST | `/services` | 🔒🛡️ | Menambah layanan baru |
 | PUT | `/services/{id}` | 🔒🛡️ | Mengubah data layanan |
 | DELETE | `/services/{id}` | 🔒🛡️ | Menghapus data layanan |
@@ -190,13 +192,30 @@ Base URL: `/api`. Endpoint bertanda 🔒 butuh header `Authorization: Bearer <to
 
 | Method | Endpoint | Auth | Deskripsi |
 |---|---|---|---|
-| POST | `/appointments` | 🔒 (pasien) | Membuat janji temu baru |
-| GET | `/appointments/my` | 🔒 (pasien) | Melihat riwayat janji temu pribadi |
-| PATCH | `/appointments/{id}/cancel` | 🔒 (pemilik) | Membatalkan janji temu (jika masih pending) |
+| POST | `/appointments` | 🔒 | Membuat janji temu baru |
+| GET | `/appointments/my` | 🔒 | Melihat riwayat janji temu pribadi |
+| PATCH | `/appointments/{id}/cancel` | 🔒 | Membatalkan janji temu (jika masih pending) |
 | GET | `/appointments` | 🔒🛡️ | Melihat seluruh antrian janji temu |
 | PATCH | `/appointments/{id}/status` | 🔒🛡️ | Mengubah status antrian (`selesai`/`batal`) |
 
+### Payments
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| POST | `/payments` | 🔒 | Membuat transaksi pembayaran / Snap Token Midtrans |
+| POST | `/payments/notification` | — | Webhook otomatis dari server Midtrans |
+
+### Reports
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| GET | `/reports` | 🔒🛡️ | Melihat laporan klinik |
+
 > Catatan: rute `/doctor-schedules` (GET) dan seluruh rute `/appointments` berada di bawah middleware `auth:sanctum`, jadi wajib login (bukan pasien saja — sesuai `routes/api.php`).
+
+## API Documentation
+Informasi lengkap mengenai API Endpoint, parameter, dan contoh response dapat diakses melalui link berikut: 
+https://documenter.getpostman.com/view/53838552/2sBY4VLxct
 
 ## 📂 Struktur Folder (ringkas)
 
@@ -208,6 +227,8 @@ dentist-api/
 │   │   │   ├── AppointmentController.php
 │   │   │   ├── AuthController.php
 │   │   │   ├── DoctorScheduleController.php
+│   │   │   ├── PaymentController.php
+│   │   │   ├── ReportController.php
 │   │   │   └── ServiceController.php
 │   │   ├── Middleware/
 │   │   │   └── checkRole.php

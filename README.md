@@ -6,6 +6,7 @@ Sistem Booking & Manajemen Layanan Klinik Gigi — RESTful API berbasis Laravel 
 
 ### Admin
 
+- Register admin akan di daftarkan di backend untuk alasan keamanan.
 - CRUD layanan klinik (tambah, ubah, hapus, lihat) dengan pagination.
 - Mengatur jadwal praktek dokter dan status ketersediaan slot waktu.
 - Melihat seluruh antrian janji temu/appointment dan mengubah statusnya (`pending`, `selesai`, `batal`).
@@ -16,6 +17,7 @@ Sistem Booking & Manajemen Layanan Klinik Gigi — RESTful API berbasis Laravel 
 - Melihat daftar layanan klinik beserta detailnya.
 - Melihat jadwal dokter yang tersedia.
 - Membuat janji temu berdasarkan slot jadwal yang dipilih.
+- Melakukan pembayaran sesuai dengan layanan dan appointment yang dipilih
 - Melihat riwayat janji temu miliknya sendiri.
 - Membatalkan janji temu yang masih berstatus `pending`.
 
@@ -23,6 +25,7 @@ Sistem Booking & Manajemen Layanan Klinik Gigi — RESTful API berbasis Laravel 
 
 - **Autentikasi & Otorisasi** — Laravel Sanctum dengan pemisahan hak akses (Role-Based Access Control) antara admin dan pasien via middleware `check_role`.
 - **Anti Double-Booking** — Menggunakan *Pessimistic Locking* dan *Database Transactions* untuk mencegah bentrok jadwal pada waktu yang bersamaan (race condition).
+- **Payment Gateaway** - Menggunakan Midtrans Sandbox Environment untuk sistem pembayarannya.
 
 ## 🛠️ Tech Stack
 

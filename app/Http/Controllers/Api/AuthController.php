@@ -19,10 +19,12 @@ class AuthController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name'      => ['required', 'string', 'max:255'],
-                'email'     => ['required', 'string', 'email', 'unique:users'],
-                'password'  => ['required', 'min:6', 'confirmed'],
-                'phone'     => ['required', 'string', 'max:15'],
+                'name'          => ['required', 'string', 'max:255'],
+                'email'         => ['required', 'string', 'email', 'unique:users'],
+                'gender'        => ['required', 'in:pria,wanita'],
+                'date_of_birth' => ['required', 'date'],
+                'password'      => ['required', 'min:6', 'confirmed'],
+                'phone'         => ['required', 'string', 'max:15'],
             ]);
 
             $user = User::create([
@@ -65,7 +67,7 @@ class AuthController extends Controller
 
             $user = User::where('email', $validated['email'])->first();
 
-            if (! $user || ! Hash::check($validated['password'], $user->password)){
+            if (! $user || ! Hash::check($validated['password'], $user->password)) {
                 return response()->json([
                     'status'    => 'error',
                     'message'   => 'Email atau password salah.'

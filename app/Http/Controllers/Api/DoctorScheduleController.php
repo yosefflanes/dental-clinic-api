@@ -20,30 +20,34 @@ class DoctorScheduleController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = DoctorSchedule::query()->orderBy('practice_date', 'asc')->orderBy('start_time', 'asc');
+            $query = DoctorSchedule::with('doctor')
+                ->orderBy('practice_date', 'asc')
+                ->orderBy('start_time', 'asc');
 
             // Filter by tanggal tertentu
-            if ($request->filled('practice_date')){
+            if ($request->filled('date')) {
+                $query->whereDate('practice_date', $request->date);
+            } else if ($request->filled('practice_date')) {
                 $query->whereDate('practice_date', $request->practice_date);
             }
 
             // Filter ketersediaan
-            if ($request->filled('is_available')){
+            if ($request->filled('is_available')) {
                 $query->where('is_available', $request->boolean('is_available'));
             }
 
             $limit = $request->integer('limit', 10);
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => 'Data jadwal berhasil diambil.',
-                'data'      => $query->paginate($limit)
+                'status' => 'success',
+                'message' => 'Data jadwal berhasil diambil.',
+                'data' => $query->paginate($limit)
             ]);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error('Schedule Index ErrorL: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Terjadi kesalahan saat mengambil data jadwal.'
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat mengambil data jadwal.'
             ], 500);
         }
     }
@@ -58,15 +62,15 @@ class DoctorScheduleController extends Controller
             $schedule = DoctorSchedule::create($request->validated());
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => 'Jadwal berhasil ditambahkan.',
-                'data'      => $schedule
+                'status' => 'success',
+                'message' => 'Jadwal berhasil ditambahkan.',
+                'data' => $schedule
             ], 201);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error('Schedule Store Error: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Terjadi kesalahan saat menambahkan jadwal praktek.'
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menambahkan jadwal praktek.'
             ], 500);
         }
     }
@@ -80,7 +84,7 @@ class DoctorScheduleController extends Controller
         try {
             $schedule = DoctorSchedule::findOrFail($id);
             $validated = $request->validate([
-                'is_available'  => ['required', 'boolean']
+                'is_available' => ['required', 'boolean']
             ]);
 
             $schedule->update(['is_available' => $validated['is_available']]);
@@ -89,20 +93,20 @@ class DoctorScheduleController extends Controller
             $statusText = $validated['is_available'] ? 'dibuka' : 'ditutup';
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => "Jadwal berhasil $statusText.",
-                'data'      => $schedule
+                'status' => 'success',
+                'message' => "Jadwal berhasil $statusText.",
+                'data' => $schedule
             ]);
-        } catch (ModelNotFoundException $e){
+        } catch (ModelNotFoundException $e) {
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Jadwal tidak ditemukan'
+                'status' => 'error',
+                'message' => 'Jadwal tidak ditemukan'
             ], 404);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error('Schedule updateAvailability Error: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Gagal memperbarui jadwal praktek.'
+                'status' => 'error',
+                'message' => 'Gagal memperbarui jadwal praktek.'
             ], 500);
         }
     }

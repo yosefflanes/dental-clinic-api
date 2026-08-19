@@ -11,6 +11,7 @@ class DoctorSchedule extends Model
     use HasFactory;
 
     protected $fillable = [
+        'doctor_id',
         'practice_date',
         'start_time',
         'end_time',
@@ -29,5 +30,11 @@ class DoctorSchedule extends Model
     public function appointment()
     {
         return $this->hasOne(Appointment::class);
+    }
+
+    // Kardinalitas: Jadwal ini milik 1 dokter 
+    public function doctor()
+    {
+        return $this->belongsTo(Doctor::class);
     }
 }

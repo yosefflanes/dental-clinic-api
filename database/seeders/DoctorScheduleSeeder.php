@@ -15,58 +15,48 @@ class DoctorScheduleSeeder extends Seeder
      */
     public function run(): void
     {
-        $doctor = Doctor::first();
+        $drIndriani = Doctor::where('name', 'LIKE', '%Puspita Indriani%')->first();
+        $drBudi = Doctor::where('name', 'LIKE', '%Budi Santoso%')->first();
 
-        if (!$doctor) {
+        if (!$drIndriani || !$drBudi)
             return;
-        }
 
-        $today = Carbon::now()->format('Y-m-d');
-        $tomorrow = Carbon::now()->addDay()->format('Y-m-d');
+        for ($i = 0; $i < 28; $i++) {
+            $date = Carbon::now()->addDays($i);
+            $dayOfWeek = $date->dayOfWeek;
 
-        $schedules = [
-            // Jadwal Hari ini
-            [
-                'doctor_id' => $doctor->id,
-                'practice_date' => $today,
-                'start_time' => '09:00:00',
-                'end_time' => '10:00:00',
-                'is_available' => true,
-            ],
-            [
-                'doctor_id' => $doctor->id,
-                'practice_date' => $today,
-                'start_time' => '10:00:00',
-                'end_time' => '11:00:00',
-                'is_available' => true,
-            ],
-            [
-                'doctor_id' => $doctor->id,
-                'practice_date' => $today,
-                'start_time' => '13:00:00',
-                'end_time' => '14:00:00',
-                'is_available' => true,
-            ],
+            if ($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::THURSDAY) {
+                for ($hour = 9; $hour < 15; $hour++) {
+                    DoctorSchedule::create([
+                        'doctor_id' => $drIndriani->id,
+                        'practice_date' => $date->format('Y-m-d'),
+                        'start_time' => sprintf('%02d:00:00', $hour),
+                        'end_time' => sprintf('%02d:00:00', $hour + 1),
+                        'is_available' => true,
+                    ]);
+                }
 
-            // Jadwal Besok
-            [
-                'doctor_id' => $doctor->id,
-                'practice_date' => $tomorrow,
-                'start_time' => '09:00:00',
-                'end_time' => '10:00:00',
-                'is_available' => true,
-            ],
-            [
-                'doctor_id' => $doctor->id,
-                'practice_date' => $tomorrow,
-                'start_time' => '10:00:00',
-                'end_time' => '11:00:00',
-                'is_available' => true,
-            ],
-        ];
-
-        foreach ($schedules as $schedule) {
-            DoctorSchedule::create($schedule);
+                for ($hour = 15; $hour < 21; $hour++) {
+                    DoctorSchedule::create([
+                        'doctor_id' => $drBudi->id,
+                        'practice_date' => $date->format('Y-m-d'),
+                        'start_time' => sprintf('%02d:00:00', $hour),
+                        'end_time' => sprintf('%02d:00:00', $hour + 1),
+                        'is_available' => true,
+                    ]);
+                }
+            }
+            if ($dayOfWeek === Carbon::FRIDAY || $dayOfWeek === Carbon::SATURDAY) {
+                for ($hour = 17; $hour < 21; $hour++) {
+                    DoctorSchedule::create([
+                        'doctor_id' => $drIndriani->id,
+                        'practice_date' => $date->format('Y-m-d'),
+                        'start_time' => sprintf('%02d:00:00', $hour),
+                        'end_time' => sprintf('%02d:00:00', $hour + 1),
+                        'is_available' => true,
+                    ]);
+                }
+            }
         }
     }
 }

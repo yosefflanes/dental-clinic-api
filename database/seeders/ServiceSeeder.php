@@ -11,6 +11,12 @@ class ServiceSeeder extends Seeder
     {
         $services = [
             [
+                'name' => 'Konsultasi Dokter Gigi',
+                'description' => 'Pemeriksaan rutin dan penanganan masalah gigi khusus untuk anak-anak dengan pendekatan yang ramah.',
+                'price' => 250000.00,
+                'is_active' => true,
+            ],
+            [
                 'name' => 'Cabut Gigi',
                 'description' => 'Tindakan ini bertujuan untuk mengangkat gigi yang sudah tidak dapat dipertahankan lagi guna menjaga kesehatan rongga mulut Anda secara keseluruhan.',
                 'price' => 1200000.00,
@@ -62,12 +68,6 @@ class ServiceSeeder extends Seeder
                 'name' => 'Pemasangan Implan Gigi',
                 'description' => 'Akar gigi tiruan berbahan titanium yang ditanam di rahang untuk menopang gigi pengganti permanen.',
                 'price' => 12000000.00,
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Konsultasi Dokter Gigi Anak',
-                'description' => 'Pemeriksaan rutin dan penanganan masalah gigi khusus untuk anak-anak dengan pendekatan yang ramah.',
-                'price' => 250000.00,
                 'is_active' => true,
             ],
         ];

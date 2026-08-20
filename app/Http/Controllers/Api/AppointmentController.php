@@ -19,15 +19,15 @@ class AppointmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $appointments = Appointment::with(['user', 'doctorSchedule', 'service'])
+        $appointments = Appointment::with(['user', 'doctorSchedule.doctor', 'service'])
             ->latest()
             ->paginate($request->integer('limit', 10));
 
-            return response()->json([
-                'status'    => 'success',
-                'message'   => 'Data appointment berhasil diambil.',
-                'data'      => $appointments
-            ]);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data appointment berhasil diambil.',
+            'data' => $appointments
+        ]);
     }
 
     /**
@@ -42,45 +42,45 @@ class AppointmentController extends Controller
             // Gunakan Pessimistic Locking
             return DB::transaction(function () use ($validated, $user) {
                 $schedule = DoctorSchedule::where('id', $validated['doctor_schedule_id'])
-                                            ->lockForUpdate()
-                                            ->first();
-                if (!$schedule){
+                    ->lockForUpdate()
+                    ->first();
+                if (!$schedule) {
                     return response()->json([
-                        'status'    => 'error',
-                        'message'   => 'Jadwal dokter tidak ditemukan.'
+                        'status' => 'error',
+                        'message' => 'Jadwal dokter tidak ditemukan.'
                     ], 404);
                 }
 
-                if (!$schedule->is_available){
+                if (!$schedule->is_available) {
                     return response()->json([
-                        'status'    => 'error',
-                        'message'   => 'Maaf, jadwal sudah penuh atau ditutup.'
+                        'status' => 'error',
+                        'message' => 'Maaf, jadwal sudah penuh atau ditutup.'
                     ], 422);
                 }
 
                 // Buat appointment/janji temu
                 $appointment = Appointment::create([
-                    'user_id'               => $user->id,
-                    'doctor_schedule_id'    => $validated['doctor_schedule_id'],
-                    'service_id'            => $validated['service_id'],
-                    'complaint'             => $validated['complaint'] ?? null,
-                    'status'                => 'pending',
+                    'user_id' => $user->id,
+                    'doctor_schedule_id' => $validated['doctor_schedule_id'],
+                    'service_id' => $validated['service_id'],
+                    'complaint' => $validated['complaint'] ?? null,
+                    'status' => 'pending',
                 ]);
 
                 $schedule->update(['is_available' => false]);
 
                 return response()->json([
-                    'status'    => 'success',
-                    'message'   => 'Janji temu berhasil dibuat.',
-                    'data'      => $appointment->load(['doctorSchedule', 'service'])
+                    'status' => 'success',
+                    'message' => 'Janji temu berhasil dibuat.',
+                    'data' => $appointment->load(['doctorSchedule', 'service'])
                 ], 201);
             });
 
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error('Appointment Store Error: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Gagal membuat appointment.'
+                'status' => 'error',
+                'message' => 'Gagal membuat appointment.'
             ], 500);
         }
     }
@@ -95,20 +95,20 @@ class AppointmentController extends Controller
 
             // Ambil data user login, diurutkan dari yang terbaru
             $appointments = Appointment::where('user_id', $user->id)
-                ->with(['doctorSchedule', 'service'])
+                ->with(['doctorSchedule.doctor', 'service'])
                 ->latest()
                 ->paginate($request->integer('limit', 10));
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => 'Riwayat janji temu berhasil diambil.',
-                'data'      => $appointments
+                'status' => 'success',
+                'message' => 'Riwayat janji temu berhasil diambil.',
+                'data' => $appointments
             ]);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             Log::error('My Appointment Error: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Gagal mengambil riwayat janji temu.'
+                'status' => 'error',
+                'message' => 'Gagal mengambil riwayat janji temu.'
             ], 500);
         }
     }
@@ -121,22 +121,22 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
 
         $validated = $request->validate([
-            'status'    => ['required', 'in:pending,selesai,batal']
+            'status' => ['required', 'in:pending,selesai,batal']
         ]);
 
         $appointment->update([
-            'status'    => $validated['status']
+            'status' => $validated['status']
         ]);
 
         // Jika admin membatalkan antrian pasien, jadwal harus dibuka kembali
-        if ($validated['status'] === 'batal'){
+        if ($validated['status'] === 'batal') {
             $appointment->doctorSchedule()->update(['is_available' => true]);
         }
 
         return response()->json([
-            'status'    => 'success',
-            'message'   => "Status janji temu berhasil diubah menjadi {$validated['status']}.",
-            'data'      => $appointment
+            'status' => 'success',
+            'message' => "Status janji temu berhasil diubah menjadi {$validated['status']}.",
+            'data' => $appointment
         ]);
     }
 
@@ -148,18 +148,18 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
 
         // Validasi 1: Memastikan pembatalan dilakukan oleh user yang membuat appoinment
-        if ($appointment->user_id !== $request->user()->id){
+        if ($appointment->user_id !== $request->user()->id) {
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Anda tidak memiliki hak untuk membatalkan janji temu ini.',
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki hak untuk membatalkan janji temu ini.',
             ], 403);
         }
 
         // Validasi 2: Antrian belum diproses atau berstatus pending
-        if ($appointment->status !== 'pending'){
+        if ($appointment->status !== 'pending') {
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Appointment tidak bisa dibatalkan.'
+                'status' => 'error',
+                'message' => 'Appointment tidak bisa dibatalkan.'
             ], 422);
         }
 
@@ -168,9 +168,9 @@ class AppointmentController extends Controller
         $appointment->doctorSchedule()->update(['is_available' => true]);
 
         return response()->json([
-            'status'    => 'success',
-            'message'   => 'Janji temu berhasil dibatalkan.',
-            'data'      => $appointment
+            'status' => 'success',
+            'message' => 'Janji temu berhasil dibatalkan.',
+            'data' => $appointment
         ]);
     }
 }

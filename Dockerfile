@@ -1,4 +1,4 @@
-FROM php:8.5-fpm
+FROM php:8.5-apache
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -6,11 +6,13 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libpq-dev \
     zip \
-    unzip \
-    nginx
+    unzip
 
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -20,30 +22,14 @@ COPY . /var/www/html
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN echo 'server { \
-    listen 80; \
-    server_name localhost; \
-    root /var/www/html/public; \
-    index index.php; \
-    charset utf-8; \
-    location / { \
-    try_files $uri $uri/ /index.php?$query_string; \
-    } \
-    location = /favicon.ico { access_log off; log_not_found off; } \
-    location = /robots.txt  { access_log off; log_not_found off; } \
-    error_page 404 /index.php; \
-    location ~ \.php$ { \
-    fastcgi_pass 127.0.0.1:9000; \
-    fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name; \
-    include fastcgi_params; \
-    } \
-    location ~ /\.(?!well-known).* { \
-    deny all; \
-    } \
-    }' > /etc/nginx/sites-available/default
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+RUN a2enmod rewrite
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true
+RUN a2enmod mpm_prefork
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 EXPOSE 80
-
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]

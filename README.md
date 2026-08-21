@@ -1,58 +1,254 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🦷 Dental Clinic Appointment API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Booking & Manajemen Layanan Klinik Gigi — RESTful API berbasis Laravel untuk mengelola sistem pemesanan janji temu (appointment) di klinik gigi. Sistem ini mencakup manajemen antrian pasien, ketersediaan jadwal dokter, pengelolaan layanan klinik, serta dilengkapi dengan autentikasi berbasis role (Admin & Pasien).
 
-## About Laravel
+## ✨ Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Admin
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Register admin akan di daftarkan di backend untuk alasan keamanan.
+- CRUD layanan klinik (tambah, ubah, hapus, lihat) dengan pagination.
+- Mengatur jadwal praktek dokter dan status ketersediaan slot waktu.
+- Melihat seluruh antrian janji temu/appointment dan mengubah statusnya (`pending`, `selesai`, `batal`).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Pasien
 
-## Learning Laravel
+- Register & login (Laravel Sanctum).
+- Melihat daftar layanan klinik beserta detailnya.
+- Melihat jadwal dokter yang tersedia.
+- Membuat janji temu berdasarkan slot jadwal yang dipilih.
+- Melakukan pembayaran sesuai dengan layanan dan appointment yang dipilih
+- Melihat riwayat janji temu miliknya sendiri.
+- Membatalkan janji temu yang masih berstatus `pending`.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Lainnya
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Autentikasi & Otorisasi** — Laravel Sanctum dengan pemisahan hak akses (Role-Based Access Control) antara admin dan pasien via middleware `check_role`.
+- **Anti Double-Booking** — Menggunakan *Pessimistic Locking* dan *Database Transactions* untuk mencegah bentrok jadwal pada waktu yang bersamaan (race condition).
+- **Payment Gateaway** - Menggunakan Midtrans Sandbox Environment untuk sistem pembayarannya.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## 🛠️ Tech Stack
 
-## Agentic Development
+| Bagian | Teknologi |
+|---|---|
+| Backend | Laravel 13.x (API-only) |
+| Bahasa Pemrograman | PHP 8.3+ |
+| Database | MySQL |
+| Autentikasi | Laravel Sanctum (Bearer token) |
+| Desain Database | dbdiagram.io |
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 🗄️ Entity Relationship Diagram (ERD)
 
-```bash
-composer require laravel/boost --dev
+```mermaid
+erDiagram
+    USERS ||--o{ APPOINTMENTS : "membuat"
+    SERVICES ||--o{ APPOINTMENTS : "dipesan pada"
+    DOCTOR_SCHEDULES ||--o{ APPOINTMENTS : "dijadwalkan pada"
+    APPOINTMENTS ||--o| PAYMENTS : "dibayar via"
 
-php artisan boost:install
+    USERS {
+        bigint id PK
+        string name
+        string email UK
+        string password
+        string phone
+        enum role
+        timestamp created_at
+    }
+    SERVICES {
+        bigint id PK
+        string name
+        text description
+        decimal price
+        boolean is_active
+    }
+    DOCTOR_SCHEDULES {
+        bigint id PK
+        date practice_date
+        time start_time
+        time end_time
+        boolean is_available
+    }
+    APPOINTMENTS {
+        bigint id PK
+        bigint user_id FK
+        bigint service_id FK
+        bigint doctor_schedule_id FK
+        text complaint
+        enum status
+        timestamp created_at
+        timestamp updated_at
+    }
+    PAYMENTS {
+        bigint id PK
+        bigint appointment_id FK
+        string transaction_id
+        string snap_token
+        string method
+        decimal amount
+        enum status
+    }
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Tabel `payments` disiapkan untuk pengembangan fitur pembayaran di masa mendatang dan belum digunakan secara aktif oleh endpoint yang ada saat ini.
 
-## Contributing
+## 🚀 Panduan Instalasi (Local Development)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Ikuti langkah-langkah di bawah ini untuk menjalankan aplikasi di komputer lokal Anda.
 
-## Code of Conduct
+### Prasyarat
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Pastikan sistem Anda sudah terinstal:
 
-## Security Vulnerabilities
+- PHP >= 8.3
+- Composer
+- MySQL Server
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Langkah-langkah
 
-## License
+1. **Clone repositori ini:**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+   ```bash
+   git clone https://github.com/yosefflanes/dental-clinic-api
+   cd dental-clinic-api
+   ```
+
+2. **Instal dependensi PHP:**
+
+   ```bash
+   composer install
+   ```
+
+3. **Salin file pengaturan environment:**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Konfigurasi Database**
+
+   Buka file `.env` dan sesuaikan kredensial database Anda:
+
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=dental_clinic_db
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+5. **Generate Application Key:**
+
+   ```bash
+   php artisan key:generate
+   ```
+
+6. **Jalankan Migrasi dan Seeder:**
+
+   > Pastikan database `dental_clinic_db` sudah dibuat di MySQL Anda.
+
+   ```bash
+   php artisan migrate --seed
+   ```
+
+7. **Jalankan Local Development Server:**
+
+   ```bash
+   php artisan serve
+   ```
+
+   API dapat diakses melalui: `http://127.0.0.1:8000/api`
+
+## 🔗 Struktur Endpoint API
+
+Base URL: `/api`. Endpoint bertanda 🔒 butuh header `Authorization: Bearer <token>`. Endpoint 🔒🛡️ hanya bisa diakses role **admin**.
+
+### Auth
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| POST | `/register` | — | Mendaftarkan akun pasien baru |
+| POST | `/login` | — | Login dan mendapatkan token Sanctum |
+| POST | `/logout` | 🔒 | Menghapus token dan keluar |
+| GET | `/user` | 🔒 | Mendapatkan data profil user yang sedang login |
+
+### Services
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| GET | `/services` | 🔒 | Melihat daftar layanan klinik |
+| GET | `/services/{id}` | 🔒 | Melihat detail spesifik suatu layanan |
+| POST | `/services` | 🔒🛡️ | Menambah layanan baru |
+| PUT | `/services/{id}` | 🔒🛡️ | Mengubah data layanan |
+| DELETE | `/services/{id}` | 🔒🛡️ | Menghapus data layanan |
+
+### Doctor Schedules
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| GET | `/doctor-schedules` | 🔒 | Melihat ketersediaan jadwal dokter |
+| POST | `/doctor-schedules` | 🔒🛡️ | Membuat jadwal praktek dokter |
+| PATCH | `/doctor-schedules/{id}/availability` | 🔒🛡️ | Membuka/menutup ketersediaan slot |
+
+### Appointments
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| POST | `/appointments` | 🔒 | Membuat janji temu baru |
+| GET | `/appointments/my` | 🔒 | Melihat riwayat janji temu pribadi |
+| PATCH | `/appointments/{id}/cancel` | 🔒 | Membatalkan janji temu (jika masih pending) |
+| GET | `/appointments` | 🔒🛡️ | Melihat seluruh antrian janji temu |
+| PATCH | `/appointments/{id}/status` | 🔒🛡️ | Mengubah status antrian (`selesai`/`batal`) |
+
+### Payments
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| POST | `/payments` | 🔒 | Membuat transaksi pembayaran / Snap Token Midtrans |
+| POST | `/payments/notification` | — | Webhook otomatis dari server Midtrans |
+
+### Reports
+
+| Method | Endpoint | Auth | Deskripsi |
+|---|---|---|---|
+| GET | `/reports` | 🔒🛡️ | Melihat laporan klinik |
+
+> Catatan: rute `/doctor-schedules` (GET) dan seluruh rute `/appointments` berada di bawah middleware `auth:sanctum`, jadi wajib login (bukan pasien saja — sesuai `routes/api.php`).
+
+## API Documentation
+Informasi lengkap mengenai API Endpoint, parameter, dan contoh response dapat diakses melalui link berikut: 
+https://documenter.getpostman.com/view/53838552/2sBY4VLxct
+
+## 📂 Struktur Folder (ringkas)
+
+```
+dentist-api/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/Api/
+│   │   │   ├── AppointmentController.php
+│   │   │   ├── AuthController.php
+│   │   │   ├── DoctorScheduleController.php
+│   │   │   ├── PaymentController.php
+│   │   │   ├── ReportController.php
+│   │   │   └── ServiceController.php
+│   │   ├── Middleware/
+│   │   │   └── checkRole.php
+│   │   └── Requests/
+│   │       ├── StoreAppointmentRequest.php
+│   │       ├── StoreDoctorScheduleRequest.php
+│   │       └── StoreServiceRequest.php
+│   ├── Models/
+│   │   ├── Appointment.php
+│   │   ├── DoctorSchedule.php
+│   │   ├── Payment.php
+│   │   ├── Service.php
+│   │   └── User.php
+│   └── Providers/
+├── database/
+│   └── migrations/
+├── routes/
+│   └── api.php
+└── ...
+```

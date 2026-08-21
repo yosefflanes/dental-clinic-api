@@ -1,0 +1,1 @@
+<?php $ch = curl_init("http://localhost:8000/api/payments"); curl_setopt($ch, CURLOPT_POST, 1); curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["appointment_id" => 1])); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Accept: application/json", "Content-Type: application/json"]); curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); $res = curl_exec($ch); echo $res; ?>

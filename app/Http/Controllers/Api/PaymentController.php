@@ -20,43 +20,44 @@ class PaymentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'appointment_id'    => ['required', 'exists:appointments,id'],
+            'appointment_id' => ['required', 'exists:appointments,id'],
         ]);
 
-        $appointment = Appointment::with(['service', 'payment'])->findOrFail($validated['appointment_id']);
+        $appointment = Appointment::with(['service', 'payment', 'doctorSchedule'])
+            ->findOrFail($validated['appointment_id']);
 
         // Validasi Otorisasi (Hanya pemilik appointment yang bisa bayar)
-        if ($appointment->user_id !== $request->user()->id){
+        if ($appointment->user_id !== $request->user()->id) {
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Anda tidak memiliki akses ke tagihan ini.'
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses ke tagihan ini.'
             ], 403);
         }
 
         // Validasi Status (Hanya yang pending yang bisa dibayar)
-        if ($appointment->status !== 'pending'){
+        if ($appointment->status !== 'pending') {
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Appointment ini tidak dalam status menunggu pembayaran.'
+                'status' => 'error',
+                'message' => 'Appointment ini tidak dalam status menunggu pembayaran.'
             ], 422);
         }
 
         // Cegah pembuatan token ganda (Idempotency Logic)
         // Jika sudah ada payment dan tokennya masih ada, kembalikan token yang lama
-        if ($appointment->payment && $appointment->payment->snap_token ){
+        if ($appointment->payment && $appointment->payment->snap_token) {
             if ($appointment->payment->status === 'settlement') {
                 return response()->json([
-                    'status'    => 'error',
-                    'message'   => 'Tagihan untuk appointment ini sudah lunas.'
+                    'status' => 'error',
+                    'message' => 'Tagihan untuk appointment ini sudah lunas.'
                 ], 422);
             }
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => 'Token pembayaran aktif berhasil diambil.',
-                'data'      => [
-                    'snap_token'    => $appointment->payment->snap_token,
-                    'payment'       => $appointment->payment,
+                'status' => 'success',
+                'message' => 'Token pembayaran aktif berhasil diambil.',
+                'data' => [
+                    'snap_token' => $appointment->payment->snap_token,
+                    'payment' => $appointment->payment,
                 ]
             ]);
         }
@@ -74,21 +75,21 @@ class PaymentController extends Controller
             $grossAmount = $appointment->service->price;
 
             $params = [
-                'transaction_details'   => [
-                    'order_id'      => $orderId,
-                    'gross_amount'  => (int) $grossAmount,
+                'transaction_details' => [
+                    'order_id' => $orderId,
+                    'gross_amount' => (int) $grossAmount,
                 ],
-                'customer_details'      => [
-                    'first_name'    => $request->user()->name,
-                    'email'         => $request->user()->email,
-                    'phone'         => $request->user()->phone,
+                'customer_details' => [
+                    'first_name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'phone' => $request->user()->phone,
                 ],
-                'item_details'          => [
+                'item_details' => [
                     [
-                        'id'        => $appointment->service->id,
-                        'price'     => (int) $grossAmount,
-                        'quantity'  => 1,
-                        'name'      => $appointment->service->name,
+                        'id' => $appointment->service->id,
+                        'price' => (int) $grossAmount,
+                        'quantity' => 1,
+                        'name' => $appointment->service->name,
                     ]
                 ]
             ];
@@ -98,25 +99,25 @@ class PaymentController extends Controller
 
             // Simpan ke database
             $payment = Payment::create([
-                'appointment_id'    => $appointment->id,
-                'amount'            => $grossAmount,
-                'snap_token'        => $snapToken,
-                'status'            => 'pending',
+                'appointment_id' => $appointment->id,
+                'amount' => $grossAmount,
+                'snap_token' => $snapToken,
+                'status' => 'pending',
             ]);
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => 'Token pembayaran midtrans berhasil dibuat.',
-                'data'      => [
-                    'snap_token'    => $snapToken,
-                    'payment'       => $payment
+                'status' => 'success',
+                'message' => 'Token pembayaran midtrans berhasil dibuat.',
+                'data' => [
+                    'snap_token' => $snapToken,
+                    'payment' => $payment
                 ]
             ], 201);
         } catch (\Exception $e) {
             Log::error('Midtrans Snap Error: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Gagal terhubung ke layanan midtrans.'
+                'status' => 'error',
+                'message' => 'Gagal terhubung ke layanan midtrans.'
             ], 500);
         }
     }
@@ -131,17 +132,17 @@ class PaymentController extends Controller
             // Ambil data notifikasi resmi dari library Midtrans
             $notif = new \Midtrans\Notification();
 
-            $transactionStatus  = $notif->transaction_status;
-            $payment_type       = $notif->payment_type;
-            $orderId            = $notif->order_id;
-            $fraudStatus        = $notif->fraud_status;
+            $transactionStatus = $notif->transaction_status;
+            $payment_type = $notif->payment_type;
+            $orderId = $notif->order_id;
+            $fraudStatus = $notif->fraud_status;
 
             // Ekstraks kembali ID Appointment dari format order_id
             // Format : DENTIST-{id_appointment}-{waktu_saat_ini}
             $exploded = explode('-', $orderId);
             $appointmentId = $exploded[1] ?? null;
 
-            if (!$appointmentId){
+            if (!$appointmentId) {
                 return response()->json(['status' => 'error', 'message' => 'Order ID tidak valid.'], 400);
             }
 
@@ -149,31 +150,31 @@ class PaymentController extends Controller
             $payment = Payment::where('appointment_id', $appointmentId)->first();
 
             if (!$payment) {
-                return response()->json(['status'   => 'error', 'message'   => 'Data pembayaran tidak ditemukan.']);
+                return response()->json(['status' => 'error', 'message' => 'Data pembayaran tidak ditemukan.']);
             }
 
             // Logika perubahan status berdasarkan respons Midtrans
-            if ($transactionStatus == 'capture'){
-                if ($fraudStatus == 'challenge'){
+            if ($transactionStatus == 'capture') {
+                if ($fraudStatus == 'challenge') {
                     $payment->status = 'pending';
-                } else if ($fraudStatus == 'accept'){
+                } else if ($fraudStatus == 'accept') {
                     $payment->status = 'settlement';
                 }
-            } else if ($transactionStatus == 'settlement'){
+            } else if ($transactionStatus == 'settlement') {
                 $payment->status = 'settlement';
-            } else if ($transactionStatus == 'pending'){
+            } else if ($transactionStatus == 'pending') {
                 $payment->status = 'pending';
-            } else if ($transactionStatus == 'deny' || $transactionStatus == 'expire' || $transactionStatus == 'cancel'){
+            } else if ($transactionStatus == 'deny' || $transactionStatus == 'expire' || $transactionStatus == 'cancel') {
                 $payment->status = 'cancel';
 
                 // Jika dibatalkan/expire, kita bisa update juga status appointment nya menjadi batal
                 $appointment = Appointment::find($appointmentId);
-                if ($appointment){
+                if ($appointment) {
                     $appointment->status = 'batal';
                     $appointment->save();
 
                     // Kembalikan ketersediaan jadwal dokter
-                    if ($appointment->doctorSchedule){
+                    if ($appointment->doctorSchedule) {
                         $appointment->doctorSchedule->update(['is_available' => true]);
                     }
                 }
@@ -185,16 +186,16 @@ class PaymentController extends Controller
             $payment->save();
 
             return response()->json([
-                'status'    => 'success',
-                'message'   => 'Notofikasi Midtrans berhasil diproses.'
+                'status' => 'success',
+                'message' => 'Notofikasi Midtrans berhasil diproses.'
             ]);
 
         } catch (\Exception $e) {
             Log::error('Midtrans Notification Error: ' . $e->getMessage());
             return response()->json([
-                'status'    => 'error',
-                'message'   => 'Terjadi kesalahan pada server webhook.',
-                'debug'     => $e->getMessage()
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan pada server webhook.',
+                'debug' => $e->getMessage()
             ]);
         }
     }

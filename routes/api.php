@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/payments/notification', [PaymentController::class, 'notification']);
+Route::get('/services', [ServiceController::class, 'index']);
 
 
 /*
@@ -30,12 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user', function (Request $request) {
         return response()->json([
-            'status'    => 'success',
-            'data'      => $request->user()
+            'status' => 'success',
+            'data' => $request->user()
         ]);
     });
 
-    Route::get('/services', [ServiceController::class, 'index']);
     Route::get('/services/{id}', [ServiceController::class, 'show']);
     Route::get('/doctor-schedules', [DoctorScheduleController::class, 'index']);
 

@@ -26,4 +26,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 8080
 
-CMD sh -c "php artisan config:cache || true; php artisan route:cache || true; php-fpm -D && nginx -g 'daemon off;'"
+CMD sh -c "php artisan config:cache || true; php artisan route:cache || true; php-fpm & nginx -g 'daemon off;'"

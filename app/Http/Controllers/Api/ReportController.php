@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,9 +22,7 @@ class ReportController extends Controller
             $canceledAppointments = Appointment::where('status', 'batal')->count();
 
             // Estimasi Revenue (Hanya dihitung dari antrian yang selesai)
-            $estimatedRevenue = Appointment::where('appointments.status', 'selesai')
-                ->join('services', 'appointments.service_id', '=', 'services.id')
-                ->sum('services.price');
+            $estimatedRevenue = Payment::where('status', 'settlement')->sum('amount');
 
             // Layanan Terlaris (Top 5)
             $topServices = Appointment::select('service_id', DB::raw('COUNT(id) as total_appointment'))

@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
@@ -159,6 +160,12 @@ class PaymentController extends Controller
                     $payment->status = 'pending';
                 } else if ($fraudStatus == 'accept') {
                     $payment->status = 'settlement';
+
+                    $appointment = Appointment::find($appointmentId);
+                    if ($appointment){
+                        $appointment->status = 'lunas';
+                        $appointment->save();
+                    }
                 }
             } else if ($transactionStatus == 'settlement') {
                 $payment->status = 'settlement';

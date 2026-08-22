@@ -95,7 +95,7 @@ class AppointmentController extends Controller
 
             // Ambil data user login, diurutkan dari yang terbaru
             $appointments = Appointment::where('user_id', $user->id)
-                ->with(['doctorSchedule.doctor', 'service'])
+                ->with(['doctorSchedule.doctor', 'service', 'payment'])
                 ->latest()
                 ->paginate($request->integer('limit', 10));
 

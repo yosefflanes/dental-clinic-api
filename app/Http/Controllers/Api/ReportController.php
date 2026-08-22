@@ -25,18 +25,15 @@ class ReportController extends Controller
             $estimatedRevenue = Payment::where('status', 'settlement')->sum('amount');
 
             // Layanan Terlaris (Top 5)
-            $topServices = Appointment::select('service_id', DB::raw('COUNT(id) as total_appointment'))
+            $topServices = Appointment::with('service')
+                ->select('service_id', \Illuminate\Support\Facades\DB::raw('count(*) as total_appointment'))
                 ->groupBy('service_id')
-                ->orderBy('total_appointment', 'desc')
-                ->with('service')
                 ->take(5)
                 ->get();
 
-            // Jadwal Paling Ramai
-            $busiestSchedule = Appointment::select('doctor_schedule_id', DB::raw('COUNT(id) as total_appointment'))
+            $busiestSchedule = Appointment::with('doctorSchedule')
+                ->select('doctor_schedule_id', \Illuminate\Support\Facades\DB::raw('count(*) as total_appointment'))
                 ->groupBy('doctor_schedule_id')
-                ->orderBy('total_appointment', 'desc')
-                ->with('doctorSchedule')
                 ->take(5)
                 ->get();
 
@@ -45,10 +42,10 @@ class ReportController extends Controller
                 'message'   => 'Laporan dan analisis data klinik berhasil diambil.',
                 'data'      => [
                     'summary'   => [
-                        'total_appointments'        => $totalAppointments,
-                        'completed_appointments'    => $completedAppointments,
-                        'pending_appointments'      => $pendingAppointments,
-                        'canceled_appointments'     => $canceledAppointments,
+                        'total_appointments'        => (int) $totalAppointments,
+                        'completed_appointments'    => (int) $completedAppointments,
+                        'pending_appointments'      => (int) $pendingAppointments,
+                        'canceled_appointments'     => (int) $canceledAppointments,
                         'estimated_revenue'         => (float) $estimatedRevenue,
                     ],
                     'top_services'      => $topServices,
@@ -56,10 +53,10 @@ class ReportController extends Controller
                 ]
             ]);
         } catch (\Exception $e){
-            Log::error("Report Index Error: " . $e->getMessage());
+            Log::error("Report Error Detail: " . $e->getMessage() . " on line " . $e->getLine());
             return response()->json([
                 'status'    => 'error',
-                'message'   => 'Terjadi kesalahan sistem saat mengambil data laporan.'
+                'message'   => 'Server Error: ' . $e->getMessage()
             ], 500);
         }
     }
